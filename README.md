@@ -1,13 +1,13 @@
 # Natural Disasters
 
-Mod de desastres naturais para Hytale.
+A natural disaster mod for Hytale.
 
 ## Blizzard
 
-- Começa com neve leve. O vento começa aos 5 segundos e ganha força até a neblina chegar, aos 10 segundos.
-- A tempestade dura 60 segundos e cobre um raio de 128 blocos.
-- O vento arrasta a neve na direção sorteada para a tempestade e empurra jogadores a céu aberto no modo Aventura.
-- A neblina branca cobre a região e pode ser vista do lado de fora.
-- O gelo avança pelas bordas da tela. Após 24 segundos de exposição, o frio causa 10 pontos de dano a cada 4 segundos.
-- Abrigos protegem do vento e do frio. Fogueiras acesas ajudam a recuperar calor.
-- Pode ser testada pelo painel `/naturaldisasters`.
+- Light snow starts the 10-second warning. The wind picks up at 5 seconds, and white fog rolls in as the blizzard begins.
+- The storm lasts 60 seconds and covers an area with a radius of 128 blocks.
+- The wind blows snow in a randomly chosen direction and pushes exposed players in Adventure mode.
+- The fog is visible from outside the storm.
+- Frost creeps inward from the edges of the screen. After 24 seconds of exposure, the cold deals 10 damage every 4 seconds.
+- Shelter protects against the wind and cold. Lit campfires help you warm up.
+- Use `/naturaldisasters` to open the test panel and start a blizzard.
