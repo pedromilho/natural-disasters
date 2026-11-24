@@ -15,7 +15,7 @@ Use `/naturaldisasters` to open the in-game test panel and start or stop a disas
 
 ## Earthquake
 
-- A three-second warning precedes the shaking. Light, moderate, and strong earthquakes have radii of 48, 72, and 96 blocks.
+- A three-second warning precedes the shaking. Light, moderate, and strong earthquakes have radii of 72, 108, and 144 blocks.
 - Each intensity has a distinct rumble. The camera shakes and players are pushed in changing directions, with stronger effects near the epicenter.
 - Fissures start at the surface and favor ground above caves. Length, width, and depth vary, with extreme sizes occurring less often.
 - Light and moderate earthquakes have a 12% and 40% chance of opening a fissure, respectively, when suitable ground is available.

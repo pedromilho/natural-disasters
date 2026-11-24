@@ -10,8 +10,9 @@ public final class EarthquakeTest {
         check(!strong.takeRuptureAttempt(), "The terrain cannot rupture during the warning");
         check(strong.tick(3) && strong.phase() == Earthquake.Phase.ACTIVE, "Shaking follows the warning");
         float beginning = strong.intensityAt(0.5, 0.5);
-        check(strong.intensityAt(38, 0.5) < beginning && strong.intensityAt(97, 0.5) == 0,
-            "Shaking falls off with distance from the epicenter");
+        checkRadius(Earthquake.Magnitude.LIGHT, 72);
+        checkRadius(Earthquake.Magnitude.MODERATE, 108);
+        checkRadius(Earthquake.Magnitude.STRONG, 144);
         check(strong.takeRuptureAttempt(), "The strongest earthquake always ruptures as shaking begins");
         strong.tick(6);
         check(strong.intensityAt(0.5, 0.5) > beginning, "Shaking builds to a peak");
@@ -63,6 +64,14 @@ public final class EarthquakeTest {
         checkFissureVariations(Earthquake.Magnitude.MODERATE, 7, 16, 3, 8, 4, 12);
         checkFissureVariations(Earthquake.Magnitude.STRONG, 20, 36, 5, 13, 10, 24);
         System.out.println("Earthquake lifecycle, probability, fissure placement, and size variation tests passed.");
+    }
+
+    private static void checkRadius(Earthquake.Magnitude magnitude, int radius) {
+        var quake = new Earthquake(0, 60, 0, magnitude, 0);
+        quake.tick(Earthquake.WARNING_SECONDS);
+        float edge = quake.intensityAt(radius, 0);
+        check(edge > 0 && edge < quake.intensityAt(radius / 2.0, 0) && quake.intensityAt(radius + 1, 0) == 0,
+            magnitude + " shaking weakens toward its expected radius and stops beyond it");
     }
 
     private static void checkGrassCover(Earthquake strong) {

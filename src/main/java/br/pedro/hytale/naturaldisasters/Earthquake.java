@@ -4,9 +4,9 @@ final class Earthquake {
     static final int WARNING_SECONDS = 3;
 
     enum Magnitude {
-        LIGHT(48, 6, 0.36f, 24.0, 0.12),
-        MODERATE(72, 9, 0.74f, 67.0, 0.40),
-        STRONG(96, 12, 1.0f, 112.0, 1.0);
+        LIGHT(72, 6, 0.36f, 24.0, 0.12),
+        MODERATE(108, 9, 0.74f, 67.0, 0.40),
+        STRONG(144, 12, 1.0f, 112.0, 1.0);
 
         final int radius;
         final int duration;
