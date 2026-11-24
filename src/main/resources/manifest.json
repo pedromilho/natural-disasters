@@ -1,0 +1,11 @@
+{
+  "Group": "Pedro",
+  "Name": "Natural Disasters",
+  "Version": "0.1.0",
+  "Description": "Regional natural disasters and an in-game test panel.",
+  "Authors": [{ "Name": "Pedro" }],
+  "Main": "br.pedro.hytale.naturaldisasters.NaturalDisastersPlugin",
+  "ServerVersion": "=0.7.7",
+  "IncludesAssetPack": true,
+  "DisabledByDefault": false
+}

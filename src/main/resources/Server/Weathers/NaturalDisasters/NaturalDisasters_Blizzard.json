@@ -1,0 +1,14 @@
+{
+  "Parent": "Zone3_Snow_Heavy",
+  "Tags": {
+    "Snow": ["Storm"]
+  },
+  "FogDistance": [-12, 30],
+  "FogOptions": {
+    "IgnoreFogLimits": true
+  },
+  "FogDensities": [
+    { "Hour": 0, "Value": 1.0 },
+    { "Hour": 12, "Value": 1.0 }
+  ]
+}
