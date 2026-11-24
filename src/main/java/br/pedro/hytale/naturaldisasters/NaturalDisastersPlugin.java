@@ -7,6 +7,7 @@ import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.event.events.player.RemovedPlayerFromWorldEvent;
 import com.hypixel.hytale.server.core.modules.singleplayer.SingleplayerModule;
 import com.hypixel.hytale.server.core.permissions.PermissionsModule;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
@@ -27,6 +28,12 @@ public final class NaturalDisastersPlugin extends JavaPlugin {
     protected void setup() {
         getEntityStoreRegistry().registerSystem(blizzards);
         getEventRegistry().registerGlobal(RemoveWorldEvent.class, event -> blizzards.remove(event.getWorld()));
+        getEventRegistry().registerGlobal(RemovedPlayerFromWorldEvent.class, event -> {
+            var holder = event.getHolder();
+            Player player = holder.getComponent(Player.getComponentType());
+            PlayerRef connection = holder.getComponent(PlayerRef.getComponentType());
+            if (player != null && connection != null) FrostHud.setLevels(player.getHudManager(), connection, 0, 0);
+        });
         getCommandRegistry().registerCommand(new TestPanelCommand());
     }
 

@@ -1,0 +1,7 @@
+{
+  "Parent": "NaturalDisasters_Blizzard",
+  "Particle": {
+    "SystemId": "NaturalDisasters_Snow_WEST",
+    "OvergroundOnly": true
+  }
+}

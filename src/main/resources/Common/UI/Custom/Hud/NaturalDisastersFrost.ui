@@ -1,0 +1,29 @@
+@FrostFrame = Group {
+  Anchor: (Full: 0);
+  HitTestVisible: false;
+  Visible: false;
+};
+
+Group {
+  Anchor: (Full: 0);
+  LayoutMode: Full;
+  HitTestVisible: false;
+
+  @FrostFrame #IceTint1 { Background: "NaturalDisasters/IceTint1.png"; }
+  @FrostFrame #IceTint2 { Background: "NaturalDisasters/IceTint2.png"; }
+  @FrostFrame #IceTint3 { Background: "NaturalDisasters/IceTint3.png"; }
+  @FrostFrame #IceTint4 { Background: "NaturalDisasters/IceTint4.png"; }
+  @FrostFrame #IceTint5 { Background: "NaturalDisasters/IceTint5.png"; }
+  @FrostFrame #IceTint6 { Background: "NaturalDisasters/IceTint6.png"; }
+  @FrostFrame #IceTint7 { Background: "NaturalDisasters/IceTint7.png"; }
+  @FrostFrame #IceTint8 { Background: "NaturalDisasters/IceTint8.png"; }
+
+  @FrostFrame #Frost1 { Background: "NaturalDisasters/Frost1.png"; }
+  @FrostFrame #Frost2 { Background: "NaturalDisasters/Frost2.png"; }
+  @FrostFrame #Frost3 { Background: "NaturalDisasters/Frost3.png"; }
+  @FrostFrame #Frost4 { Background: "NaturalDisasters/Frost4.png"; }
+  @FrostFrame #Frost5 { Background: "NaturalDisasters/Frost5.png"; }
+  @FrostFrame #Frost6 { Background: "NaturalDisasters/Frost6.png"; }
+  @FrostFrame #Frost7 { Background: "NaturalDisasters/Frost7.png"; }
+  @FrostFrame #Frost8 { Background: "NaturalDisasters/Frost8.png"; }
+}

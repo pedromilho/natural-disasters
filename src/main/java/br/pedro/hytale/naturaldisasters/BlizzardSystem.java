@@ -6,6 +6,7 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.system.tick.TickingSystem;
 import com.hypixel.hytale.math.util.ChunkUtil;
+import com.hypixel.hytale.protocol.ChangeVelocityType;
 import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -16,22 +17,31 @@ import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageCause;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageSystems;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
+import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
+import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
+import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
+import com.hypixel.hytale.server.core.modules.splitvelocity.VelocityConfig;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.ParticleUtil;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.chunk.heightmap.HeightmapColumn;
 import com.hypixel.hytale.server.core.universe.world.chunk.section.BlockSection;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
 final class BlizzardSystem extends TickingSystem<EntityStore> {
-    private static final String WEATHER_ID = "NaturalDisasters_Blizzard";
     private static final String COLD_DAMAGE_ID = "Ice";
+    private static final String LIGHT_SNOW_EFFECT = "Snow_Light";
     private static final float WEATHER_TRANSITION_SECONDS = 2.0f;
+    private static final float WARNING_SNOW_SECONDS = 1.2f;
     private static final int CAMPFIRE_RADIUS = 3;
+    private static final VelocityConfig WIND_RESISTANCE = windResistance();
 
     // Each world thread owns its storm and participants. Different worlds can tick concurrently.
     private final Map<World, ActiveBlizzard> storms = new ConcurrentHashMap<>();
@@ -45,17 +55,17 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
         World world = store.getExternalData().getWorld();
         if (storms.containsKey(world)) return;
 
-        int weatherIndex = Weather.getAssetMap().getIndex(WEATHER_ID);
+        TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
+        if (transform == null) return;
+        Vector3dc position = transform.getPosition();
+        var storm = new Blizzard(position.x(), position.z());
+        int weatherIndex = Weather.getAssetMap().getIndex(storm.wind().weatherId());
         DamageCause coldDamage = DamageCause.getAssetMap().getAsset(COLD_DAMAGE_ID);
         if (weatherIndex <= 0 || coldDamage == null) {
             notify(initiator, DisasterText.UNAVAILABLE);
             return;
         }
-        TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
-        if (transform == null) return;
-
-        Vector3dc position = transform.getPosition();
-        var active = new ActiveBlizzard(new Blizzard(position.x(), position.z()), weatherIndex, coldDamage,
+        var active = new ActiveBlizzard(storm, weatherIndex, coldDamage,
             campfireState("Processing"), campfireState("ProcessCompleted"), new HashMap<>());
         storms.put(world, active);
         updatePlayers(store, active);
@@ -64,12 +74,18 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
     @Override
     public void tick(float dt, int systemIndex, Store<EntityStore> store) {
         ActiveBlizzard active = storms.get(store.getExternalData().getWorld());
-        if (active == null || !active.storm.tick(dt)) return;
+        if (active == null) return;
+        boolean countdownChanged = active.storm.tick(dt);
         if (active.storm.phase() == Blizzard.Phase.IDLE) {
             stop(store, DisasterText.ENDED);
-        } else {
-            updatePlayers(store, active);
+            return;
         }
+        if (countdownChanged) {
+            updatePlayers(store, active);
+            if (BlizzardMist.refreshDue(active.storm)) BlizzardMist.refresh(store, active.storm);
+        }
+        double increment = active.storm.windIncrement();
+        if (increment > 0) updateWind(store, active.storm, increment);
     }
 
     void stop(Store<EntityStore> store, DisasterText reason) {
@@ -81,9 +97,8 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
             Ref<EntityStore> ref = entry.getKey();
             if (!ref.isValid()) continue;
             PlayerRef player = store.getComponent(ref, PlayerRef.getComponentType());
-            TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
             if (player == null) continue;
-            restoreWeather(store, ref, player, transform, entry.getValue());
+            clearEffects(store, ref, player, entry.getValue());
             notify(player, reason);
         }
         for (PlayerRef player : world.getPlayerRefs()) {
@@ -119,7 +134,7 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
                 updateParticipant(world, store, ref, player, transform, active);
             } else {
                 Participant participant = active.participants.remove(ref);
-                if (participant != null) restoreWeather(store, ref, player, transform, participant);
+                if (participant != null) clearEffects(store, ref, player, participant);
             }
             refreshPanel(world, store, ref);
         }
@@ -131,32 +146,39 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
         Blizzard.Phase phase = active.storm.phase();
         boolean phaseChanged = participant.lastPhase != phase;
         if (phaseChanged) {
-            if (phase == Blizzard.Phase.WARNING) {
-                notify(player, DisasterText.ALERT, active.storm.remainingSeconds());
-            } else {
-                notify(player, DisasterText.ARRIVAL);
+            switch (phase) {
+                case WARNING_SNOW -> notify(player, DisasterText.ALERT, active.storm.remainingSeconds());
+                case WARNING_WIND -> notify(player, DisasterText.WIND_RISING, active.storm.remainingSeconds());
+                case ACTIVE -> notify(player, DisasterText.ARRIVAL);
+                case IDLE -> { }
             }
             participant.lastPhase = phase;
         }
-        if (phase != Blizzard.Phase.ACTIVE) return;
-
         Vector3dc position = transform.getPosition();
         boolean exposed = isOutside(world.getChunkStore(), position);
+        if (phase != Blizzard.Phase.ACTIVE) {
+            if (exposed) showWarningSnow(store, ref, position, active.storm);
+            return;
+        }
         if (exposed) {
             applyWeather(store, ref, player, participant, active.weatherIndex);
         } else {
             restoreWeather(store, ref, player, transform, participant);
         }
-        if (phaseChanged) return;
-
         Player entity = store.getComponent(ref, Player.getComponentType());
         if (entity == null || entity.getGameMode() != GameMode.Adventure
             || store.getComponent(ref, DeathComponent.getComponentType()) != null) {
-            participant.exposure = new Blizzard.Exposure();
+            participant.exposure.reset();
+            participant.visibleFrost = 0;
+            participant.visibleTint = 0;
+            if (entity != null) FrostHud.setLevels(entity.getHudManager(), player, 0, 0);
             return;
         }
+        if (phaseChanged) return;
+
         boolean warm = !exposed || nearCampfire(world.getChunkStore(), position, active);
         participant.exposure.tick(warm);
+        updateFrost(store, ref, player, entity, participant, warm);
         if (warm) return;
 
         if (participant.exposure.warn()) notify(player, DisasterText.COLD);
@@ -164,10 +186,81 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
             // Apply damage outside the ECS tick, where damage handlers may add components.
             world.execute(() -> {
                 if (storms.get(world) == active && ref.isValid() && !store.isShutdown()) {
-                    DamageSystems.executeDamage(ref, store, new Damage(Damage.NULL_SOURCE, active.coldDamage, 1.0f));
+                    DamageSystems.executeDamage(ref, store, new Damage(Damage.NULL_SOURCE, active.coldDamage, Blizzard.DAMAGE));
                 }
             });
         }
+    }
+
+    private static void showWarningSnow(Store<EntityStore> store, Ref<EntityStore> ref, Vector3dc position,
+                                        Blizzard storm) {
+        Player entity = store.getComponent(ref, Player.getComponentType());
+        if (entity == null || entity.isWaitingForClientReady()) return;
+
+        boolean windy = storm.phase() == Blizzard.Phase.WARNING_WIND;
+        String particle = windy ? storm.wind().snowEffectId() : LIGHT_SNOW_EFFECT;
+        float scale = windy ? 0.75f : 1.0f;
+        ParticleUtil.spawnParticleEffect(particle, position.x(), position.y() + 1, position.z(),
+            0, 0, 0, scale, null, null, List.of(ref), store, WARNING_SNOW_SECONDS);
+    }
+
+    private static void updateWind(Store<EntityStore> store, Blizzard storm, double increment) {
+        World world = store.getExternalData().getWorld();
+        for (PlayerRef player : world.getPlayerRefs()) {
+            Ref<EntityStore> ref = player.getReference();
+            if (ref == null || !ref.isValid() || ref.getStore() != store) continue;
+
+            Player entity = store.getComponent(ref, Player.getComponentType());
+            if (entity == null || entity.getGameMode() != GameMode.Adventure || entity.isWaitingForClientReady()
+                || store.getComponent(ref, DeathComponent.getComponentType()) != null) continue;
+
+            TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
+            if (transform == null) continue;
+            Vector3dc position = transform.getPosition();
+            if (storm.contains(position.x(), position.z()) && isOutside(world.getChunkStore(), position)) {
+                applyWind(store, ref, storm.wind(), increment);
+            }
+        }
+    }
+
+    private static void applyWind(Store<EntityStore> store, Ref<EntityStore> ref, WindDirection direction,
+                                  double increment) {
+        Velocity velocity = store.getComponent(ref, Velocity.getComponentType());
+        if (velocity != null) {
+            var drift = new Vector3d(direction.x() * increment, 0.0, direction.z() * increment);
+            velocity.addInstruction(drift, WIND_RESISTANCE, ChangeVelocityType.Add);
+        }
+    }
+
+    private static VelocityConfig windResistance() {
+        var config = new VelocityConfig();
+        config.setGroundResistance(0.96f);
+        config.setAirResistance(0.96f);
+        config.setThreshold(0.02f);
+        return config;
+    }
+
+    private static void updateFrost(Store<EntityStore> store, Ref<EntityStore> ref, PlayerRef player, Player entity,
+                                    Participant participant, boolean warm) {
+        EntityStatMap stats = store.getComponent(ref, EntityStatMap.getComponentType());
+        var health = stats == null ? null : stats.get(DefaultEntityStatTypes.getHealth());
+        float healthRemaining = health == null ? Float.POSITIVE_INFINITY : health.get() - health.getMin();
+        int cracks = participant.exposure.frostLevel(healthRemaining);
+        int tint = participant.exposure.tintLevel(healthRemaining);
+        if (warm) {
+            cracks = Math.min(cracks, Math.max(0, participant.visibleFrost - 1));
+            tint = Math.min(tint, Math.max(0, participant.visibleTint - 1));
+        }
+        participant.visibleFrost = cracks;
+        participant.visibleTint = tint;
+        FrostHud.setLevels(entity.getHudManager(), player, cracks, tint);
+    }
+
+    private static void clearEffects(Store<EntityStore> store, Ref<EntityStore> ref, PlayerRef player,
+                                     Participant participant) {
+        restoreWeather(store, ref, player, store.getComponent(ref, TransformComponent.getComponentType()), participant);
+        Player entity = store.getComponent(ref, Player.getComponentType());
+        if (entity != null) FrostHud.setLevels(entity.getHudManager(), player, 0, 0);
     }
 
     private static void applyWeather(Store<EntityStore> store, Ref<EntityStore> ref, PlayerRef player,
@@ -193,11 +286,16 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
     private static boolean isOutside(ChunkStore chunks, Vector3dc position) {
         int x = (int) Math.floor(position.x());
         int z = (int) Math.floor(position.z());
+        HeightmapColumn heightmap = loadedHeightmap(chunks, x, z);
+        return heightmap != null && heightmap.getHeight(x & ChunkUtil.SIZE_MASK, z & ChunkUtil.SIZE_MASK)
+            < position.y() + 1.6;
+    }
+
+    static HeightmapColumn loadedHeightmap(ChunkStore chunks, int x, int z) {
         Ref<ChunkStore> column = chunks.getChunkReference(ChunkUtil.indexChunkFromBlock(x, z));
-        if (column == null || !column.isValid()) return false;
+        if (column == null || !column.isValid()) return null;
         HeightmapColumn heightmap = chunks.getStore().getComponent(column, HeightmapColumn.getComponentType());
-        return heightmap != null && heightmap.getHeightmap() != null
-            && heightmap.getHeight(x & ChunkUtil.SIZE_MASK, z & ChunkUtil.SIZE_MASK) < position.y() + 1.6;
+        return heightmap != null && heightmap.getHeightmap() != null ? heightmap : null;
     }
 
     private static int campfireState(String state) {
@@ -243,7 +341,9 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
 
     private static final class Participant {
         private Blizzard.Phase lastPhase;
-        private Blizzard.Exposure exposure = new Blizzard.Exposure();
+        private final Blizzard.Exposure exposure = new Blizzard.Exposure();
+        private int visibleFrost;
+        private int visibleTint;
         private boolean weatherClaimed;
     }
 }

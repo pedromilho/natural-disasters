@@ -47,8 +47,14 @@ Group {
         Group {
           LayoutMode: Left;
           Anchor: (Height: 34);
-          $C.@TextButton #StartBlizzard { Anchor: (Height: 34, Width: 177, Right: 8); }
-          $C.@SmallSecondaryTextButton #StopBlizzard { Anchor: (Height: 34, Width: 140); }
+          $C.@TextButton #StartBlizzard {
+            @Text = "Start Blizzard";
+            Anchor: (Height: 34, Width: 177, Right: 8);
+          }
+          $C.@SmallSecondaryTextButton #StopBlizzard {
+            @Text = "Stop Test";
+            Anchor: (Height: 34, Width: 140);
+          }
         }
       }
 
@@ -57,7 +63,10 @@ Group {
         Anchor: (Height: 32);
         LayoutMode: Left;
         Group { FlexWeight: 1; }
-        $C.@SmallSecondaryTextButton #Close { Anchor: (Width: 104, Height: 32); }
+        $C.@SmallSecondaryTextButton #Close {
+          @Text = "Close";
+          Anchor: (Width: 104, Height: 32);
+        }
       }
     }
   }

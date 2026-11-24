@@ -69,7 +69,8 @@ final class DisasterTestPage extends InteractiveCustomUIPage<DisasterTestPage.Ac
         Blizzard storm = blizzards.get(world);
         String status = storm == null ? DisasterText.IDLE.get(playerRef) : switch (storm.phase()) {
             case IDLE -> DisasterText.IDLE.get(playerRef);
-            case WARNING -> DisasterText.WARNING.get(playerRef, storm.remainingSeconds());
+            case WARNING_SNOW -> DisasterText.WARNING_SNOW.get(playerRef, storm.remainingSeconds());
+            case WARNING_WIND -> DisasterText.WARNING_WIND.get(playerRef, storm.remainingSeconds());
             case ACTIVE -> DisasterText.ACTIVE.get(playerRef, storm.remainingSeconds());
         };
         ui.set("#Status.Text", status);
