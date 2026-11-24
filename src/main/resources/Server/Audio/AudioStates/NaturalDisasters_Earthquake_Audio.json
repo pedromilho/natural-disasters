@@ -1,0 +1,6 @@
+{
+  "Authority": "Server",
+  "Values": ["Quiet", "Warning", "Rumble"],
+  "DefaultValue": "Quiet",
+  "DefaultTransition": { "Duration": { "Ms": 0 }, "Curve": "Linear" }
+}

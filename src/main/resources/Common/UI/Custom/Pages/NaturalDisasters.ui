@@ -5,9 +5,9 @@ Group {
   Group { FlexWeight: 1; }
   Group {
     LayoutMode: Center;
-    Anchor: (Height: 280);
+    Anchor: (Height: 430);
     $C.@Panel {
-      Anchor: (Width: 500, Height: 280);
+      Anchor: (Width: 500, Height: 430);
       Padding: (Full: 20);
       LayoutMode: Top;
 
@@ -54,6 +54,51 @@ Group {
           $C.@SmallSecondaryTextButton #StopBlizzard {
             @Text = "Stop Test";
             Anchor: (Height: 34, Width: 140);
+          }
+        }
+      }
+
+      Group {
+        LayoutMode: Top;
+        Anchor: (Height: 128, Top: 12);
+        Padding: (Full: 12);
+        Background: #2c2627;
+
+        Group {
+          LayoutMode: Left;
+          Anchor: (Height: 26);
+          Label {
+            Text: "Earthquake";
+            FlexWeight: 1;
+            Style: (FontSize: 18, RenderBold: true, TextColor: #ffeadc, VerticalAlignment: Center);
+          }
+          Label #EarthquakeStatus {
+            Anchor: (Width: 205);
+            Style: (FontSize: 14, TextColor: #f1bda0, HorizontalAlignment: End, VerticalAlignment: Center);
+          }
+        }
+        Label #EarthquakeDetails {
+          Anchor: (Height: 24, Bottom: 10);
+          Style: (FontSize: 13, TextColor: #d5bbaf, VerticalAlignment: Center);
+        }
+        Group {
+          LayoutMode: Left;
+          Anchor: (Height: 34);
+          $C.@SmallSecondaryTextButton #QuakeLight {
+            @Text = "Light";
+            Anchor: (Height: 34, Width: 92, Right: 8);
+          }
+          $C.@SmallSecondaryTextButton #QuakeModerate {
+            @Text = "Moderate";
+            Anchor: (Height: 34, Width: 102, Right: 8);
+          }
+          $C.@TextButton #QuakeStrong {
+            @Text = "Strong";
+            Anchor: (Height: 34, Width: 92, Right: 8);
+          }
+          $C.@SmallSecondaryTextButton #StopEarthquake {
+            @Text = "Stop Test";
+            Anchor: (Height: 34, Width: 120);
           }
         }
       }

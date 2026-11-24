@@ -1,0 +1,36 @@
+{
+  "FirstPerson": {
+    "Duration": 0.45,
+    "EaseIn": { "Time": 0.02, "Type": "QuadInOut" },
+    "EaseOut": { "Time": 0.14, "Type": "QuadInOut" },
+    "Offset": {
+      "X": [
+        { "Frequency": 15.7, "Amplitude": 0.52, "Type": "Sin" },
+        { "Frequency": 11.0, "Amplitude": 0.17, "Type": "Perlin_Hermite", "Seed": 11 }
+      ],
+      "Y": [
+        { "Frequency": 23.2, "Amplitude": 0.72, "Type": "Sin" },
+        { "Frequency": 17.0, "Amplitude": 0.22, "Type": "Perlin_Hermite", "Seed": 29 }
+      ],
+      "Z": []
+    },
+    "Rotation": { "Pitch": [], "Yaw": [], "Roll": [] }
+  },
+  "ThirdPerson": {
+    "Duration": 0.45,
+    "EaseIn": { "Time": 0.02, "Type": "QuadInOut" },
+    "EaseOut": { "Time": 0.14, "Type": "QuadInOut" },
+    "Offset": {
+      "X": [
+        { "Frequency": 15.7, "Amplitude": 0.37, "Type": "Sin" },
+        { "Frequency": 11.0, "Amplitude": 0.12, "Type": "Perlin_Hermite", "Seed": 11 }
+      ],
+      "Y": [
+        { "Frequency": 23.2, "Amplitude": 0.52, "Type": "Sin" },
+        { "Frequency": 17.0, "Amplitude": 0.16, "Type": "Perlin_Hermite", "Seed": 29 }
+      ],
+      "Z": []
+    },
+    "Rotation": { "Pitch": [], "Yaw": [], "Roll": [] }
+  }
+}

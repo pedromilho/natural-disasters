@@ -2,7 +2,6 @@ package br.pedro.hytale.naturaldisasters;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
@@ -41,10 +40,7 @@ final class BlizzardMist {
         for (Offset offset : OFFSETS) {
             int x = (int) Math.floor(storm.centerX() + offset.x);
             int z = (int) Math.floor(storm.centerZ() + offset.z);
-            HeightmapColumn heightmap = BlizzardSystem.loadedHeightmap(chunks, x, z);
-            if (heightmap == null) continue;
-
-            int surfaceY = heightmap.getHeight(x & ChunkUtil.SIZE_MASK, z & ChunkUtil.SIZE_MASK);
+            int surfaceY = LoadedTerrain.surface(chunks, x, z);
             if (surfaceY == HeightmapColumn.NO_HEIGHT) continue;
             ParticleUtil.spawnParticleEffect(EFFECT, x + 0.5, surfaceY + ABOVE_SURFACE, z + 0.5,
                 0, 0, 0, MIST_SCALE, null, null, viewers, store, MAX_EFFECT_SECONDS);

@@ -19,6 +19,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 public final class NaturalDisastersPlugin extends JavaPlugin {
     private final BlizzardSystem blizzards = new BlizzardSystem();
+    private final EarthquakeSystem earthquakes = new EarthquakeSystem();
 
     public NaturalDisastersPlugin(JavaPluginInit init) {
         super(init);
@@ -27,11 +28,16 @@ public final class NaturalDisastersPlugin extends JavaPlugin {
     @Override
     protected void setup() {
         getEntityStoreRegistry().registerSystem(blizzards);
-        getEventRegistry().registerGlobal(RemoveWorldEvent.class, event -> blizzards.remove(event.getWorld()));
+        getEntityStoreRegistry().registerSystem(earthquakes);
+        getEventRegistry().registerGlobal(RemoveWorldEvent.class, event -> {
+            blizzards.remove(event.getWorld());
+            earthquakes.remove(event.getWorld());
+        });
         getEventRegistry().registerGlobal(RemovedPlayerFromWorldEvent.class, event -> {
             var holder = event.getHolder();
             Player player = holder.getComponent(Player.getComponentType());
             PlayerRef connection = holder.getComponent(PlayerRef.getComponentType());
+            if (connection != null) earthquakes.removeListener(event.getWorld(), connection);
             if (player != null && connection != null) FrostHud.setLevels(player.getHudManager(), connection, 0, 0);
         });
         getCommandRegistry().registerCommand(new TestPanelCommand());
@@ -40,6 +46,7 @@ public final class NaturalDisastersPlugin extends JavaPlugin {
     @Override
     protected void shutdown() {
         blizzards.shutdown();
+        earthquakes.shutdown();
     }
 
     static boolean canTest(PlayerRef player) {
@@ -63,7 +70,7 @@ public final class NaturalDisastersPlugin extends JavaPlugin {
             }
             Player entity = store.getComponent(ref, Player.getComponentType());
             if (entity != null) {
-                entity.getPageManager().openCustomPage(ref, store, new DisasterTestPage(player, blizzards));
+                entity.getPageManager().openCustomPage(ref, store, new DisasterTestPage(player, blizzards, earthquakes));
             }
         }
     }

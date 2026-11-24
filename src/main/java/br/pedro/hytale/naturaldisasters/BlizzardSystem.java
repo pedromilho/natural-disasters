@@ -5,7 +5,6 @@ import com.hypixel.hytale.builtin.weather.resources.WeatherResource;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.system.tick.TickingSystem;
-import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.protocol.ChangeVelocityType;
 import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.Message;
@@ -24,7 +23,6 @@ import com.hypixel.hytale.server.core.modules.splitvelocity.VelocityConfig;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.ParticleUtil;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.chunk.heightmap.HeightmapColumn;
 import com.hypixel.hytale.server.core.universe.world.chunk.section.BlockSection;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -103,7 +101,7 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
         }
         for (PlayerRef player : world.getPlayerRefs()) {
             Ref<EntityStore> ref = player.getReference();
-            if (ref != null && ref.isValid() && ref.getStore() == store) refreshPanel(world, store, ref);
+            if (ref != null && ref.isValid() && ref.getStore() == store) DisasterTestPage.refreshPlayer(world, store, ref);
         }
     }
 
@@ -136,7 +134,7 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
                 Participant participant = active.participants.remove(ref);
                 if (participant != null) clearEffects(store, ref, player, participant);
             }
-            refreshPanel(world, store, ref);
+            DisasterTestPage.refreshPlayer(world, store, ref);
         }
     }
 
@@ -155,7 +153,7 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
             participant.lastPhase = phase;
         }
         Vector3dc position = transform.getPosition();
-        boolean exposed = isOutside(world.getChunkStore(), position);
+        boolean exposed = LoadedTerrain.isOutside(world.getChunkStore(), position);
         if (phase != Blizzard.Phase.ACTIVE) {
             if (exposed) showWarningSnow(store, ref, position, active.storm);
             return;
@@ -217,7 +215,7 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
             TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
             if (transform == null) continue;
             Vector3dc position = transform.getPosition();
-            if (storm.contains(position.x(), position.z()) && isOutside(world.getChunkStore(), position)) {
+            if (storm.contains(position.x(), position.z()) && LoadedTerrain.isOutside(world.getChunkStore(), position)) {
                 applyWind(store, ref, storm.wind(), increment);
             }
         }
@@ -283,21 +281,6 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
         }
     }
 
-    private static boolean isOutside(ChunkStore chunks, Vector3dc position) {
-        int x = (int) Math.floor(position.x());
-        int z = (int) Math.floor(position.z());
-        HeightmapColumn heightmap = loadedHeightmap(chunks, x, z);
-        return heightmap != null && heightmap.getHeight(x & ChunkUtil.SIZE_MASK, z & ChunkUtil.SIZE_MASK)
-            < position.y() + 1.6;
-    }
-
-    static HeightmapColumn loadedHeightmap(ChunkStore chunks, int x, int z) {
-        Ref<ChunkStore> column = chunks.getChunkReference(ChunkUtil.indexChunkFromBlock(x, z));
-        if (column == null || !column.isValid()) return null;
-        HeightmapColumn heightmap = chunks.getStore().getComponent(column, HeightmapColumn.getComponentType());
-        return heightmap != null && heightmap.getHeightmap() != null ? heightmap : null;
-    }
-
     private static int campfireState(String state) {
         BlockType campfire = BlockType.getAssetMap().getAsset("Bench_Campfire");
         BlockType lit = campfire == null ? null : campfire.getBlockForState(state);
@@ -323,13 +306,6 @@ final class BlizzardSystem extends TickingSystem<EntityStore> {
             }
         }
         return false;
-    }
-
-    private static void refreshPanel(World world, Store<EntityStore> store, Ref<EntityStore> ref) {
-        Player player = store.getComponent(ref, Player.getComponentType());
-        if (player != null && player.getPageManager().getCustomPage() instanceof DisasterTestPage page) {
-            page.refresh(world);
-        }
     }
 
     private static void notify(PlayerRef player, DisasterText text, Object... values) {

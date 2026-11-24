@@ -1,0 +1,21 @@
+{
+  "AudioCategory": "AudioCat_SFX",
+  "StateBindings": [
+    {
+      "AudioState": "NaturalDisasters_Earthquake_Audio",
+      "Deltas": [
+        { "Value": "Quiet", "Mute": true },
+        { "Value": "Warning", "Mute": true }
+      ]
+    }
+  ],
+  "Volume": 2,
+  "MaxInstance": 1,
+  "PreventSoundInterruption": true,
+  "Layers": [
+    {
+      "Files": ["Sounds/NaturalDisasters/Earthquake_Rupture.ogg"],
+      "Probability": 100
+    }
+  ]
+}

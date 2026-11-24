@@ -1,0 +1,9 @@
+{
+  "Spawners": [
+    {
+      "SpawnerId": "NaturalDisasters_Earthquake_Dust_Cloud",
+      "PositionOffset": { "X": 0, "Y": 0.2, "Z": 0 }
+    },
+    { "SpawnerId": "NaturalDisasters_Earthquake_Dust_Bits" }
+  ]
+}

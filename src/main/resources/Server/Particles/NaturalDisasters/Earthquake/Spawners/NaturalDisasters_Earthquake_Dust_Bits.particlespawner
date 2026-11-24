@@ -1,0 +1,4 @@
+{
+  "Parent": "Block_Land_Dust_Bits",
+  "ParticleLifeSpan": { "Min": 0.12, "Max": 0.28 }
+}

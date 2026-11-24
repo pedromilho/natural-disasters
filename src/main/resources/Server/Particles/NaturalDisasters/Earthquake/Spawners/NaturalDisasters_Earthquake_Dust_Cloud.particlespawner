@@ -1,0 +1,5 @@
+{
+  "Parent": "Block_Land_Hard_Dust_Cloud",
+  "ParticleLifeSpan": { "Min": 0.22, "Max": 0.36 },
+  "SpawnRate": { "Min": 30, "Max": 30 }
+}
